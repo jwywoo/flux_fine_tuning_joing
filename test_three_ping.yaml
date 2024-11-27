@@ -1,0 +1,97 @@
+---
+job: extension
+config:
+  # 파일명 선정
+  name: "IAM_THREE_PING_TEST_V1"
+  process:
+    - type: 'sd_trainer'
+      # session, sample, 가중치를 저장할 루트 폴더 경로 지정
+      training_folder: "output"
+      # N번의 한번씩 성능을 확인하려면 주석을 해제
+      performance_log_every: 1000
+      device: cuda:0
+      # Trigger Word가 정해졌으면 학습정보의 Caption(사진 설명)에 [trigger]를 추가하면 정해진 Trigger Word로 바뀜
+      # 만약에 없다면은 학습정보의 Caption(사진 설명)에 자동으로 추가됨
+      trigger_word: "IATPT"
+      network:
+        type: "lora"
+        linear: 16
+        linear_alpha: 16
+      save:
+        dtype: float16 # 저장할 때의 데이터 형태
+        save_every: 250 # 저장 주기
+        max_step_saves_to_keep: 4 # 얼마나 보유할 지
+        push_to_hub: false # true로 바꾼다면 HuggingFace에 업로드 됩니다.
+        # 여기에 Hugging Face의 write권한이 있는 토큰과 저장소 정보를 작성하세요 안그러면 입력하라고 뜹니다.
+#       hf_repo_id: your-username/your-model-slug
+#       hf_private: true #whether the repo is private or public
+      datasets:
+        # 데이터셋은 학습할 사진이 들어간 폴더입니다. 사진에 대한 설명의 경우 txt  파일로 사진파일의 이름과 일치해서 저장해야합니다.
+        # 예를들어, image2.jpg의 경우 image2.txt가 있어야 합니다. 그리고 현재 사용가능한 파일 형식의 경우 jpg, jpeg, png가 있으니 조심하세용
+        # 사진의 경우 자동으로 크기가 조정고 해상도 또한 지정한대로 저장이됩니다
+        # 윈도우 운영체제를 사용할 경우 아래의 경로 형식을 사용하세요.
+        # "C:\\path\\to\\images\\folder"
+        - folder_path: "/path/to/images/folder"
+          caption_ext: "txt"
+          caption_dropout_rate: 0.05  # will drop out the caption 5% of time
+          shuffle_tokens: false  # shuffle caption order, split by commas
+          cache_latents_to_disk: true  # leave this true unless you know what you're doing
+          resolution: [ 512, 768, 1024 ]  # flux enjoys multiple resolutions
+      train:
+        batch_size: 1
+        steps: 2000  # 저체 트레이닝 횟수입니다. 500에서 4000 정도가 좋습니다.
+        gradient_accumulation_steps: 1
+        train_unet: true
+        train_text_encoder: false  # Flux에 해당하지 않는 부분입니다.
+        gradient_checkpointing: true  # vram이 많지 않다면 그냥 true로 해두세요
+        noise_scheduler: "flowmatch" # 학습에서만 사용하세요
+        optimizer: "adamw8bit"
+        lr: 1e-4
+        # pre-training sampled을 지나칠라면 주석해제
+#        skip_first_sample: true
+        # 샘플링을 완전 안쓰려면 주석해제
+#        disable_sampling: true
+        # Vell Curved 가중치를 사용하려면 주석을 해제하세요. 실험단계지만 어쩔때는 더 좋은 결과를 만들어 냅니다.
+#        linear_timesteps: true
+
+        # EMA 학습을 부드럽게 진행하도록 도움을 줍니다. 하지만 느려지는 원인중 하나입니다. 그냥 내비두세요.
+        ema_config:
+          use_ema: true
+          ema_decay: 0.99
+
+        # will probably need this if gpu supports it for flux, other dtypes may not work correctly
+        # GPU가 flux를 지원한다면 그냥 내비두세요. 다른 데이터 형태는 작동되지 않을 수 있습니다.
+        dtype: bf16
+      model:
+        # Hugging Face 모델명이 혹은 로컬이라면
+        name_or_path: "black-forest-labs/FLUX.1-dev"
+        is_flux: true
+        quantize: true  # run 8bit mixed precision
+#        low_vram: true  # uncomment this if the GPU is connected to your monitors. It will use less vram to quantize, but is slower.
+      sample:
+        sampler: "flowmatch" # 위에 있는 train.noise_scheduler와 일치해야합니다.
+        sample_every: 250 # 샘플 생성 주기
+        width: 1024
+        height: 1024
+        prompts:
+          # 셈플생성을 위한 Prompt,  프롬프트에 [trigger]를 추가하면 trigger word로 변경될겁니다. 
+#          - "[trigger] holding a sign that says 'I LOVE PROMPTS!'"\
+          - "woman with red hair, playing chess at the park, bomb going off in the background"
+          - "a woman holding a coffee cup, in a beanie, sitting at a cafe"
+          - "a horse is a DJ at a night club, fish eye lens, smoke machine, lazer lights, holding a martini"
+          - "a man showing off his cool new t shirt at the beach, a shark is jumping out of the water in the background"
+          - "a bear building a log cabin in the snow covered mountains"
+          - "woman playing the guitar, on stage, singing a song, laser lights, punk rocker"
+          - "hipster man with a beard, building a chair, in a wood shop"
+          - "photo of a man, white background, medium shot, modeling clothing, studio lighting, white backdrop"
+          - "a man holding a sign that says, 'this is a sign'"
+          - "a bulldog, in a post apocalyptic world, with a shotgun, in a leather jacket, in a desert, with a motorcycle"
+        neg: ""  # Flux는 부정 String(Prompts)를 사용하지 않습니다.
+        seed: 42
+        walk_seed: true
+        guidance_scale: 4
+        sample_steps: 20
+# 생성될 모델에 대한 추가적인 정보를 입력하세요.
+meta:
+  name: "[name]"
+  version: '1.0'
