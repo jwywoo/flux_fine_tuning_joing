@@ -2,13 +2,13 @@
 job: extension
 config:
   # 파일명 선정
-  name: "IAM_THREE_PING_TEST_V1"
+  name: "IAM_THREE_PING_TEST_FLORENCE_V1"
   process:
     - type: 'sd_trainer'
       # session, sample, 가중치를 저장할 루트 폴더 경로 지정
       training_folder: "output"
       # N번의 한번씩 성능을 확인하려면 주석을 해제
-      performance_log_every: 1000
+      performance_log_every: 250
       device: cuda:0
       # Trigger Word가 정해졌으면 학습정보의 Caption(사진 설명)에 [trigger]를 추가하면 정해진 Trigger Word로 바뀜
       # 만약에 없다면은 학습정보의 Caption(사진 설명)에 자동으로 추가됨
@@ -23,15 +23,15 @@ config:
         max_step_saves_to_keep: 4 # 얼마나 보유할 지
         push_to_hub: false # true로 바꾼다면 HuggingFace에 업로드 됩니다.
         # 여기에 Hugging Face의 write권한이 있는 토큰과 저장소 정보를 작성하세요 안그러면 입력하라고 뜹니다.
-#       hf_repo_id: your-username/your-model-slug
-#       hf_private: true #whether the repo is private or public
+        # hf_repo_id: jwywoo/test_three_ping_florence
+        # hf_private: true #whether the repo is private or public
       datasets:
         # 데이터셋은 학습할 사진이 들어간 폴더입니다. 사진에 대한 설명의 경우 txt  파일로 사진파일의 이름과 일치해서 저장해야합니다.
         # 예를들어, image2.jpg의 경우 image2.txt가 있어야 합니다. 그리고 현재 사용가능한 파일 형식의 경우 jpg, jpeg, png가 있으니 조심하세용
         # 사진의 경우 자동으로 크기가 조정고 해상도 또한 지정한대로 저장이됩니다
         # 윈도우 운영체제를 사용할 경우 아래의 경로 형식을 사용하세요.
         # "C:\\path\\to\\images\\folder"
-        - folder_path: "/path/to/images/folder"
+        - folder_path: "/content/drive/MyDrive/FLUX DATASET/TEST_DATASET_THREE_PING_FLORENCE"
           caption_ext: "txt"
           caption_dropout_rate: 0.05  # will drop out the caption 5% of time
           shuffle_tokens: false  # shuffle caption order, split by commas
@@ -39,7 +39,7 @@ config:
           resolution: [ 512, 768, 1024 ]  # flux enjoys multiple resolutions
       train:
         batch_size: 1
-        steps: 2000  # 저체 트레이닝 횟수입니다. 500에서 4000 정도가 좋습니다.
+        steps: 500  # 저체 트레이닝 횟수입니다. 500에서 4000 정도가 좋습니다.
         gradient_accumulation_steps: 1
         train_unet: true
         train_text_encoder: false  # Flux에 해당하지 않는 부분입니다.
@@ -75,17 +75,9 @@ config:
         height: 1024
         prompts:
           # 셈플생성을 위한 Prompt,  프롬프트에 [trigger]를 추가하면 trigger word로 변경될겁니다. 
-#          - "[trigger] holding a sign that says 'I LOVE PROMPTS!'"\
-          - "woman with red hair, playing chess at the park, bomb going off in the background"
-          - "a woman holding a coffee cup, in a beanie, sitting at a cafe"
-          - "a horse is a DJ at a night club, fish eye lens, smoke machine, lazer lights, holding a martini"
-          - "a man showing off his cool new t shirt at the beach, a shark is jumping out of the water in the background"
-          - "a bear building a log cabin in the snow covered mountains"
-          - "woman playing the guitar, on stage, singing a song, laser lights, punk rocker"
-          - "hipster man with a beard, building a chair, in a wood shop"
-          - "photo of a man, white background, medium shot, modeling clothing, studio lighting, white backdrop"
-          - "a man holding a sign that says, 'this is a sign'"
-          - "a bulldog, in a post apocalyptic world, with a shotgun, in a leather jacket, in a desert, with a motorcycle"
+          - "[trigger] holding a sign that says 'I LOVE PROMPTS!'"
+          - "[trigger] laughing at the same time"
+          - "[trigger] surrounded by puppies and cats"
         neg: ""  # Flux는 부정 String(Prompts)를 사용하지 않습니다.
         seed: 42
         walk_seed: true
